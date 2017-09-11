@@ -49,7 +49,9 @@ sensorytidy<-sensorytidy %>%
     gather(Person,value,Person_1:Person_5) %>%  
     mutate(Person = gsub("Person_","",Person)) %>%
     arrange(Item)
-summary(sensorytidy)
+```
+```{r echo=F, eval=T, include=T}
+knitr::kable(summary(sensorytidy),caption="syntax may be slightly off")
 ```
 
 \subsection{Part B}
