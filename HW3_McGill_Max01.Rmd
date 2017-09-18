@@ -1,0 +1,403 @@
+---
+title: "STAT 5014 HW3"
+author: "Max McGill"
+date: '`r Sys.Date()`'
+output:
+  pdf_document: default
+subtitle: Due Monday September 19, 10 am
+---
+```{r, echo=F,eval=F}
+rm(list = ls())   
+    graphics.off()
+    options(scipen = 4, digits = 6)
+    options(stringsAsFactors = FALSE)
+    knitr::opts_chunk$set(echo = F, eval=T, cache=T, tidy.opts=list(width.cutoff=55),
+                tidy=T, include=FALSE, message=F, warning=F)
+    library.warn <- library
+    library <- function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
+                        logical.return = FALSE, warn.conflicts = FALSE, quietly = TRUE,
+                        verbose = getOption("verbose")) {
+       if (!character.only) {
+          package <- as.character(substitute(package))
+       }
+       suppressPackageStartupMessages(library.warn(
+          package, help, pos, lib.loc, character.only = TRUE,
+          logical.return, warn.conflicts, quietly, verbose))}
+```
+\section{Problem 4}
+My takeaway from the style guides is that closing curly braces should have their own line, indentations should be two spaces long, spaces should be included around operators and after commas, and identifiers should either consistently use or not include underscores or dashes to distinguish individual words.
+Personally, I will work to follow the guidelines set for using curly brackets and designating identifiers.
+
+\section{Problem 5}
+From the messages, it suggests including spaces around infix operators and after commas, as well as avoiding absolute paths.
+
+\section{Problem 6}
+```{r, echo=F}
+library(vioplot)
+obsdata<-readRDS("./HW3_data.rds")
+func<-function(data){
+            data1<-data[data$Observer=='1',]
+        obs1<-c(1,apply(data1[2:3],2,mean),apply(data1[2:3],2,sd),cor(data1[2],data1[3]))
+            data2<-data[data$Observer=='2',]
+        obs2<-c(2,apply(data2[2:3],2,mean),apply(data2[2:3],2,sd),cor(data2[2],data2[3]))
+            data3<-data[data$Observer=='3',]
+        obs3<-c(3,apply(data3[2:3],2,mean),apply(data3[2:3],2,sd),cor(data3[2],data3[3]))
+            data4<-data[data$Observer=='4',]
+        obs4<-c(4,apply(data4[2:3],2,mean),apply(data4[2:3],2,sd),cor(data4[2],data4[3]))
+            data5<-data[data$Observer=='5',]
+        obs5<-c(5,apply(data5[2:3],2,mean),apply(data5[2:3],2,sd),cor(data5[2],data5[3]))
+            data6<-data[data$Observer=='6',]
+        obs6<-c(6,apply(data6[2:3],2,mean),apply(data6[2:3],2,sd),cor(data6[2],data6[3]))
+            data7<-data[data$Observer=='7',]
+        obs7<-c(7,apply(data7[2:3],2,mean),apply(data7[2:3],2,sd),cor(data7[2],data7[3]))
+            data8<-data[data$Observer=='8',]
+        obs8<-c(8,apply(data8[2:3],2,mean),apply(data8[2:3],2,sd),cor(data8[2],data8[3]))
+            data9<-data[data$Observer=='9',]
+        obs9<-c(9,apply(data9[2:3],2,mean),apply(data9[2:3],2,sd),cor(data9[2],data9[3]))
+            data10<-data[data$Observer=='10',]
+        obs10<-c(10,apply(data10[2:3],2,mean),apply(data10[2:3],2,sd),cor(data10[2],
+                                                                       data10[3]))
+            data11<-data[data$Observer=='11',]
+        obs11<-c(11,apply(data11[2:3],2,mean),apply(data11[2:3],2,sd),cor(data11[2],
+                                                                       data11[3]))
+            data12<-data[data$Observer=='12',]
+        obs12<-c(12,apply(data12[2:3],2,mean),apply(data12[2:3],2,sd),cor(data12[2],
+                                                                       data12[3]))
+            data13<-data[data$Observer=='13',]
+        obs13<-c(13,apply(data13[2:3],2,mean),apply(data13[2:3],2,sd),cor(data13[2],
+                                                                       data13[3]))
+        
+  obsdf<-rbind.data.frame(obs1,obs2,obs3,obs4,obs5,obs6,obs7,obs8,obs9,obs10,obs11,obs12,
+                          obs13)
+  colnames(obsdf)=c("Observer","dev1 mean","dev2 mean","dev1 sd","dev2 sd","correlation")
+  obsdf
+}
+knitr::kable(func(obsdata), caption="Observers Data Summary")
+par(mfcol=c(1,2))
+boxplot(func(obsdata)$"dev1 mean",func(obsdata)$"dev2 mean",names=c("dev1","dev2"),
+      main="Boxplot of Means by Dev",col="purple")
+vioplot(func(obsdata)$"dev1 sd",func(obsdata)$"dev2 sd",names=c("dev1","dev2"))
+      title("Violin Plot of SD by Dev")
+```
+\section{Problem 7}
+```{r, echo=F}
+library(dplyr)
+library(tidyr)
+#get data
+url<-"http://www2.isye.gatech.edu/~jeffwu/wuhamadabook/data/BloodPressure.dat"
+doctorsraw<-read.table(url, header=T, skip=1, fill=T, stringsAsFactors = F)
+#remove duplicate variable
+doctors02<-select(doctorsraw,-Day.1)
+#gather reading values and designate them by device and doctor sources
+doctorstidy<-gather(doctors02,key="Reader",value ="Reading",Dev1:Doc3)
+knitr::kable(summary(doctorstidy), caption="Reading Data Summary")
+```
+\section{Problem 8}
+\begin{equation}
+f(x) = 3^x - sin(x) + cos(5x)
+\end{equation}
+```{r, echo=F}
+library(numDeriv)
+func02<-function(x){
+  (3^x)-sin(x)+cos(5*x)
+}
+par(mfcol=c(1,1))
+curve(func02,xlim=c(-10,-5),lwd=2,lty=2,ylab='f(x)',main="Plot of f(x) from -10 to -5")
+abline(h=0)
+
+newton<-function(f,a,b,tol=1e-5,n=1000){
+  require(numDeriv)
+  x0 <- a
+  k <- n
+  if(f(a)==0.0){
+    return(a)
+  }
+  if(f(b)==0.0){
+    return(b)
+  }
+  for(i in 1:n){
+    dx<-genD(func=f,x=x0)$D[1]
+    x1<-x0-(f(x0)/dx)
+    k[i] <- x1
+    if(abs(x1-x0)<tol){
+      root.approx<-tail(k, n=1)
+      res<-list('root approximation'=root.approx,'iterations'=k)
+      return(res)
+    }
+    x0<-x1
+  }
+  print('Too many iterations in method')
+}
+```
+Looking at the plot of f(x), there are a number of apparent roots in the interval of x = -10 to x = -5.
+The following solutions using Newton's method target the roots visible near x = -9 and x = -6.
+```{r, echo=F}
+newton(func02,-9.3,-9)
+newton(func02,-6.2,-5.9)
+par(mfcol=c(1,2))
+plot(newton(func02,-9.3,-9)$iterations,xlab="Iteration",ylab="x",main="Iterations for Tolerance (-9.3,-9)")
+plot(newton(func02,-6.2,-5.9)$iterations,xlab="Iteration",ylab="x",main="Iterations for Tolerance (-6.2,-5.9)")
+```
+\section{Problem 9}
+```{r, echo=F}
+library(data.table)
+#this had the defect code and description
+Car_Gebreken_select <- fread(input = "./Open_Data_RDW__Gebreken.csv", header = T,
+                             select=c(1,6), showProgress=F)
+#this has the license plate, inspection date and defect code
+Car_Geconstat_select <- fread(input = "./Open_Data_RDW__Geconstateerde_Gebreken.csv",
+                              header=T, select=c(1,3,5),showProgress=F)
+#this has the license plate, make and model of vehicle
+Car_Person_select <- fread(input = "./Personenauto_basisdata.csv", header=T, showProgress =
+                             F,select = c(1,3,4))
+#merge data by license plate, then by defect code
+Car_mergelicense<-merge(Car_Geconstat_select,Car_Person_select,by="Kenteken")
+Car_mergefull<-merge(Car_Gebreken_select,Car_mergelicense,by="Gebrek identificatie")
+#remove NA values
+Car_NAless<-drop_na(Car_mergefull)
+#retain entries from only 2017
+Car_2017<-Car_NAless[grep("2017",Car_NAless$"Meld datum door keuringsinstantie"),]
+#rename columns to single words
+colnames(Car_2017)<-c("Gebrek_identificatie","Gebrek_omschrijving","Kenteken",
+                              "Meld_datum_door_keuringsinstantie","Merk","Handelsbenaming")
+#find the number of unique makes and models
+uniquemakes<-uniqueN(Car_2017$"Merk")
+uniquemodels<-uniqueN(Car_2017$"Handelsbenaming")
+```
+Number of unique makes from 2017:
+```{r, echo=F}
+uniquemakes
+```
+Number of unique models from 2017:
+```{r, echo=F}
+uniquemodels
+```
+
+```{r, echo=F}
+#create a function to find the most frequent values with counts
+freqfunc <- function(x, n){
+  tail(sort(table(unlist(strsplit(as.character(x), ", ")))), n)
+}
+#find the most frequent defects using the function
+freqfunc(Car_2017$Gebrek_omschrijving,5)
+freqfunc(Car_2017$Gebrek_identificatie,5)
+#obtain and store other necessary data
+Car_AC1<-subset(Car_2017,Gebrek_omschrijving=="Band(en) aanwezig met een profieldiepte van 1,6 t/m 2,5 mm")
+    dAC1_make<-freqfunc(Car_AC1$Merk,1)
+    dAC1_model<-freqfunc(Car_AC1$Handelsbenaming,1)
+    dAC1_trans<-"Tire(s) present with a profile depth of 1.6 to 2.5 mm"
+Car_K04<-subset(Car_2017,Gebrek_omschrijving=="Werking/toestand verplicht licht/retroreflector 5.*.55")
+    dK04_make<-freqfunc(Car_K04$Merk,1)
+    dK04_model<-freqfunc(Car_K04$Handelsbenaming,1)
+    dK04_trans<-"Operation / Condition Required Light / Retroreflector 5. *. 55"
+Car_RA2<-subset(Car_2017,Gebrek_omschrijving=="Overmatige olielekkage")
+    dRA2_make<-freqfunc(Car_RA2$Merk,1)
+    dRA2_model<-freqfunc(Car_RA2$Handelsbenaming,1)
+    dRA2_trans<-"Excessive oil leakage"
+Car_205<-subset(Car_2017,Gebrek_omschrijving=="Band onvoldoende profiel")
+    d205_make<-freqfunc(Car_205$Merk,1)
+    d205_model<-freqfunc(Car_205$Handelsbenaming,1)
+    d205_trans<-"Tire insufficient profile"
+Car_497<-subset(Car_2017,Gebrek_omschrijving=="Kentekenplaatverlichting werkt niet (goed) / ontbreekt")
+    d497_make<-freqfunc(Car_497$Merk,1)
+    d497_model<-freqfunc(Car_497$Handelsbenaming,1)
+    d497_trans<-"License plate light does not work (good) / is missing"
+#create a data frame and vectors and reorder appropriately
+Car_defects<-data.frame(freqfunc(Car_2017$Gebrek_omschrijving,5))
+Car_defects2<-Car_defects[order(-Car_defects$Freq),]
+defect_make<-rbind("Volkswagen","Peugeot","Opel","Volkswagen","Peugeot")
+defect_model<-rbind("Polo","Polo","206; 1.4 3DRS","Polo","Corsa")
+defect_trans<-rbind(dAC1_trans,dK04_trans,dRA2_trans,d205_trans,d497_trans)
+#bind individual frames to final frame and rename columns appropriately
+Car_most<-cbind(Car_defects2,defect_make,defect_model,defect_trans)
+colnames(Car_most)<-c("Defect","Frequency","Most_Frequent_Make","Most_Frequent_Model","Defect_Translation")
+knitr::kable(Car_most, caption="5 Most Fequent Defects with Most Frequent Make and Model")
+```
+This workflow begins with loading in the three datasets, specified to include only the necessary columns of data, then merging them into a single data table, first by license plate number and then by defect identification code.
+The data is then cleaned by removing NA values and columns unrelated to observations from 2017, as well as by renaming the columns to singular letter sequences that more easily facilitate manipulation.
+Next, the numbers of unique makes and models are found through the uniqueN function.
+A function is then created to deduce the most frequent entries in a column, and it is applied to both defects and the make and model columns of filtered subsets corresponding to the top five defects.
+The data, as well as translations of the specific defects provided by Google, are bound into a data frame.
+Finally, its columns are renamed and a table is produced tio represent the five most common defects, their frequencies, the most common make and model of car to carry them, and their meaning in English.
+
+\section{Appendix 1: R Code}
+\subsection{Problem 5}
+```{r, eval=F}
+install.packages("lintr")
+library(lintr)
+setwd("C:/Users/mmcgi/OneDrive/Documents/homework/STAT_5014_homework/")
+lint(filename = "./02_data_munging_summarizing_R_git/HW2_McGill_Max.Rmd")
+```
+\subsection{Problem 6}
+```{r, eval=F}
+#install.packages("vioplot",repos = "http://cran.us.r-project.org")
+library(vioplot)
+setwd("C:/Users/mmcgi/OneDrive/Documents/homework/STAT_5014_homework/03_good_programming_R_functions")
+obsdata<-readRDS("./03_good_programming_R_functions/HW3_data.rds")
+func<-function(data){
+            data1<-data[data$Observer=='1',]
+        obs1<-c(1,apply(data1[2:3],2,mean),apply(data1[2:3],2,sd),cor(data1[2],data1[3]))
+            data2<-data[data$Observer=='2',]
+        obs2<-c(2,apply(data2[2:3],2,mean),apply(data2[2:3],2,sd),cor(data2[2],data2[3]))
+            data3<-data[data$Observer=='3',]
+        obs3<-c(3,apply(data3[2:3],2,mean),apply(data3[2:3],2,sd),cor(data3[2],data3[3]))
+            data4<-data[data$Observer=='4',]
+        obs4<-c(4,apply(data4[2:3],2,mean),apply(data4[2:3],2,sd),cor(data4[2],data4[3]))
+            data5<-data[data$Observer=='5',]
+        obs5<-c(5,apply(data5[2:3],2,mean),apply(data5[2:3],2,sd),cor(data5[2],data5[3]))
+            data6<-data[data$Observer=='6',]
+        obs6<-c(6,apply(data6[2:3],2,mean),apply(data6[2:3],2,sd),cor(data6[2],data6[3]))
+            data7<-data[data$Observer=='7',]
+        obs7<-c(7,apply(data7[2:3],2,mean),apply(data7[2:3],2,sd),cor(data7[2],data7[3]))
+            data8<-data[data$Observer=='8',]
+        obs8<-c(8,apply(data8[2:3],2,mean),apply(data8[2:3],2,sd),cor(data8[2],data8[3]))
+            data9<-data[data$Observer=='9',]
+        obs9<-c(9,apply(data9[2:3],2,mean),apply(data9[2:3],2,sd),cor(data9[2],data9[3]))
+            data10<-data[data$Observer=='10',]
+        obs10<-c(10,apply(data10[2:3],2,mean),apply(data10[2:3],2,sd),cor(data10[2],
+                                                                       data10[3]))
+            data11<-data[data$Observer=='11',]
+        obs11<-c(11,apply(data11[2:3],2,mean),apply(data11[2:3],2,sd),cor(data11[2],
+                                                                       data11[3]))
+            data12<-data[data$Observer=='12',]
+        obs12<-c(12,apply(data12[2:3],2,mean),apply(data12[2:3],2,sd),cor(data12[2],
+                                                                       data12[3]))
+            data13<-data[data$Observer=='13',]
+        obs13<-c(13,apply(data13[2:3],2,mean),apply(data13[2:3],2,sd),cor(data13[2],
+                                                                       data13[3]))
+        
+  obsdf<-rbind.data.frame(obs1,obs2,obs3,obs4,obs5,obs6,obs7,obs8,obs9,obs10,obs11,obs12,
+                          obs13)
+  colnames(obsdf)=c("Observer","dev1 mean","dev2 mean","dev1 sd","dev2 sd","correlation")
+  obsdf
+}
+knitr::kable(func(obsdata), caption="Observers Data Summary")
+par(mfcol=c(1,2))
+boxplot(func(obsdata)$"dev1 mean",func(obsdata)$"dev2 mean",names=c("dev1","dev2"),
+      main="Boxplot of Means by Dev")
+vioplot(func(obsdata)$"dev1 sd",func(obsdata)$"dev2 sd",names=c("dev1","dev2"))
+      title("Violin Plot of SD by Dev")
+```
+\subsection{Problem 7}
+```{r, eval=F}
+library(dplyr)
+library(tidyr)
+#get data
+url<-"http://www2.isye.gatech.edu/~jeffwu/wuhamadabook/data/BloodPressure.dat"
+doctorsraw<-read.table(url, header=T, skip=1, fill=T, stringsAsFactors = F)
+#remove duplicate variable
+doctors02<-select(doctorsraw,-Day.1)
+#gather reading values and designate them by device and doctor sources
+doctorstidy<-gather(doctors02,key="Reader",value ="Reading",Dev1:Doc3)
+knitr::kable(summary(doctorstidy), caption="Reading Data Summary")
+```
+\subsection{Problem 8}
+```{r, eval=F}
+#install.packages(numDeriv)
+library(numDeriv)
+func02<-function(x){
+  (3^x)-sin(x)+cos(5*x)
+}
+par(mfcol=c(1,1))
+curve(func02,xlim=c(-10,-5),lwd=2,lty=2,ylab='f(x)',main="Plot of f(x) from -10 to -5")
+abline(h=0)
+
+newton<-function(f,a,b,tol=1e-5,n=1000){
+  require(numDeriv)
+  x0 <- a
+  k <- n
+  if(f(a)==0.0){
+    return(a)
+  }
+  if(f(b)==0.0){
+    return(b)
+  }
+  for(i in 1:n){
+    dx<-genD(func=f,x=x0)$D[1]
+    x1<-x0-(f(x0)/dx)
+    k[i] <- x1
+    if(abs(x1-x0)<tol){
+      root.approx<-tail(k, n=1)
+      res<-list('root approximation'=root.approx,'iterations'=k)
+      return(res)
+    }
+    x0<-x1
+  }
+  print('Too many iterations in method')
+}
+
+newton(func02,-9.3,-9)
+newton(func02,-6.2,-5.9)
+par(mfcol=c(1,2))
+plot(newton(func02,-9.3,-9)$iterations,xlab="Iteration",ylab="x",main="Iterations for Tolerance (-9.3,-9)")
+plot(newton(func02,-6.2,-5.9)$iterations,xlab="Iteration",ylab="x",main="Iterations for Tolerance (-6.2,-5.9)")
+```
+\subsection{Problem 9}
+```{r, eval=F}
+#install.packages("data.table")
+library(data.table)
+setwd("C:/Users/mmcgi/OneDrive/Documents/homework/STAT_5014_homework/03_good_programming_R_functions")
+#this had the defect code and description
+Car_Gebreken_select <- fread(input = "./Open_Data_RDW__Gebreken.csv", header = T,
+                             select=c(1,6), showProgress=F)
+#this has the license plate, inspection date and defect code
+Car_Geconstat_select <- fread(input = "./Open_Data_RDW__Geconstateerde_Gebreken.csv",
+                              header=T, select=c(1,3,5),showProgress=F)
+#this has the license plate, make and model of vehicle
+Car_Person_select <- fread(input = "./Personenauto_basisdata.csv", header=T, showProgress =
+                             F, select = c(1,3,4))
+#merge data by license plate, then by defect code
+Car_mergelicense<-merge(Car_Geconstat_select,Car_Person_select,by="Kenteken")
+Car_mergefull<-merge(Car_Gebreken_select,Car_mergelicense,by="Gebrek identificatie")
+#remove NA values
+Car_NAless<-drop_na(Car_mergefull)
+#retain entries from only 2017
+Car_2017<-Car_NAless[grep("2017",Car_NAless$"Meld datum door keuringsinstantie"),]
+#rename columns to single words
+colnames(Car_2017)<-c("Gebrek_identificatie","Gebrek_omschrijving","Kenteken",
+                              "Meld_datum_door_keuringsinstantie","Merk","Handelsbenaming")
+#find the number of unique makes and models
+uniquemakes<-uniqueN(Car_2017$"Merk")
+uniquemodels<-uniqueN(Car_2017$"Handelsbenaming")
+uniquemakes
+uniquemodels
+
+#create a function to find the most frequent values with counts
+freqfunc <- function(x, n){
+  tail(sort(table(unlist(strsplit(as.character(x), ", ")))), n)
+}
+#find the most frequent defects using the function
+freqfunc(Car_2017$Gebrek_omschrijving,5)
+freqfunc(Car_2017$Gebrek_identificatie,5)
+#obtain and store other necessary data
+Car_AC1<-subset(Car_2017,Gebrek_omschrijving=="Band(en) aanwezig met een profieldiepte van 1,6 t/m 2,5 mm")
+    dAC1_make<-freqfunc(Car_AC1$Merk,1)
+    dAC1_model<-freqfunc(Car_AC1$Handelsbenaming,1)
+    dAC1_trans<-"Tire(s) present with a profile depth of 1.6 to 2.5 mm"
+Car_K04<-subset(Car_2017,Gebrek_omschrijving=="Werking/toestand verplicht licht/retroreflector 5.*.55")
+    dK04_make<-freqfunc(Car_K04$Merk,1)
+    dK04_model<-freqfunc(Car_K04$Handelsbenaming,1)
+    dK04_trans<-"Operation / Condition Required Light / Retroreflector 5. *. 55"
+Car_RA2<-subset(Car_2017,Gebrek_omschrijving=="Overmatige olielekkage")
+    dRA2_make<-freqfunc(Car_RA2$Merk,1)
+    dRA2_model<-freqfunc(Car_RA2$Handelsbenaming,1)
+    dRA2_trans<-"Excessive oil leakage"
+Car_205<-subset(Car_2017,Gebrek_omschrijving=="Band onvoldoende profiel")
+    d205_make<-freqfunc(Car_205$Merk,1)
+    d205_model<-freqfunc(Car_205$Handelsbenaming,1)
+    d205_trans<-"Tire insufficient profile"
+Car_497<-subset(Car_2017,Gebrek_omschrijving=="Kentekenplaatverlichting werkt niet (goed) / ontbreekt")
+    d497_make<-freqfunc(Car_497$Merk,1)
+    d497_model<-freqfunc(Car_497$Handelsbenaming,1)
+    d497_trans<-"License plate light does not work (good) / is missing"
+#create a data frame and vectors and reorder appropriately
+Car_defects<-data.frame(freqfunc(Car_2017$Gebrek_omschrijving,5))
+Car_defects2<-Car_defects[order(-Car_defects$Freq),]
+defect_make<-rbind("Volkswagen","Peugeot","Opel","Volkswagen","Peugeot")
+defect_model<-rbind("Polo","Polo","206; 1.4 3DRS","Polo","Corsa")
+defect_trans<-rbind(dAC1_trans,dK04_trans,dRA2_trans,d205_trans,d497_trans)
+#bind individual frames to final frame and rename columns appropriately
+Car_most<-cbind(Car_defects2,defect_make,defect_model,defect_trans)
+colnames(Car_most)<-c("Defect","Frequency","Most_Frequent_Make","Most_Frequent_Model","Defect_Translation")
+knitr::kable(Car_most, caption="5 Most Fequent Defects with Most Frequent Make and Model")
+```
