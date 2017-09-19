@@ -3,6 +3,7 @@ title: "STAT 5014 HW3"
 author: "Max McGill"
 date: '`r Sys.Date()`'
 output:
+  html_document: default
   pdf_document: default
 subtitle: Due Monday September 19, 10 am
 ---
@@ -35,7 +36,9 @@ From the messages, it suggests including spaces around infix operators and after
 ```{r, echo=F}
 library(vioplot)
 obsdata<-readRDS("./HW3_data.rds")
-func<-function(data){
+
+#create a function to summarize and compile the necessary data
+sumfunc<-function(data){
             data1<-data[data$Observer=='1',]
         obs1<-c(1,apply(data1[2:3],2,mean),apply(data1[2:3],2,sd),cor(data1[2],data1[3]))
             data2<-data[data$Observer=='2',]
@@ -66,17 +69,41 @@ func<-function(data){
             data13<-data[data$Observer=='13',]
         obs13<-c(13,apply(data13[2:3],2,mean),apply(data13[2:3],2,sd),cor(data13[2],
                                                                        data13[3]))
-        
+#have the function compile a frame of the data
   obsdf<-rbind.data.frame(obs1,obs2,obs3,obs4,obs5,obs6,obs7,obs8,obs9,obs10,obs11,obs12,
                           obs13)
+#rename the columns of the data frame
   colnames(obsdf)=c("Observer","dev1 mean","dev2 mean","dev1 sd","dev2 sd","correlation")
   obsdf
 }
-knitr::kable(func(obsdata), caption="Observers Data Summary")
+
+#summarizeData<-function(data,observer){ 
+#function to create summary statistics
+#need data and observer 
+# to summarize 
+#returns vector of values 
+#    temp1<-data[data$Observer==observer,]    
+#    temp2<-c(apply(temp1[2:3],2,mean),apply(temp1[2:3],2,sd),cor(temp1[2], temp1[3]))
+#    return(temp2)
+#}
+
+#create a data frame by looping the function over the observers
+#obsdf0 <- data.frame()
+#for (i in 1:13) {
+#    obsdf1 <- rbind(obsdf0,c(summarizeData(obsdata,i)))
+#}
+#create a column to label the observers for each row
+#obsnumber<-c(1:13)
+#obsdf2<-cbind(obsnumber,obsdf1)
+#rename the columns
+#colnames(obsdf2)<-c("Observer","dev1 mean","dev2 mean","dev1 sd","dev2 sd","correlation")
+
+#create a table, boxplot, and violin plot of the respective columns from the output
+knitr::kable(sumfunc(obsdata), caption="Observers Data Summary")
 par(mfcol=c(1,2))
-boxplot(func(obsdata)$"dev1 mean",func(obsdata)$"dev2 mean",names=c("dev1","dev2"),
-      main="Boxplot of Means by Dev",col="purple")
-vioplot(func(obsdata)$"dev1 sd",func(obsdata)$"dev2 sd",names=c("dev1","dev2"))
+boxplot(sumfunc(obsdata)$"dev1 mean",sumfunc(obsdata)$"dev2 mean",names=c("dev1","dev2"),
+      main="Boxplot of Means by Dev")
+vioplot(sumfunc(obsdata)$"dev1 sd",sumfunc(obsdata)$"dev2 sd",names=c("dev1","dev2"))
       title("Violin Plot of SD by Dev")
 ```
 \section{Problem 7}
@@ -102,9 +129,10 @@ func02<-function(x){
   (3^x)-sin(x)+cos(5*x)
 }
 par(mfcol=c(1,1))
-curve(func02,xlim=c(-10,-5),lwd=2,lty=2,ylab='f(x)',main="Plot of f(x) from -10 to -5")
+curve(func02,xlim=c(-10,-5),lwd=2,lty=2,ylab="f(x)",main="Plot of f(x) from -10 to -5")
 abline(h=0)
 
+#function courtesy of <https://rpubs.com/aaronsc32/newton-raphson-method>
 newton<-function(f,a,b,tol=1e-5,n=1000){
   require(numDeriv)
   x0 <- a
@@ -178,9 +206,11 @@ uniquemodels
 freqfunc <- function(x, n){
   tail(sort(table(unlist(strsplit(as.character(x), ", ")))), n)
 }
+
 #find the most frequent defects using the function
 freqfunc(Car_2017$Gebrek_omschrijving,5)
 freqfunc(Car_2017$Gebrek_identificatie,5)
+
 #obtain and store other necessary data
 Car_AC1<-subset(Car_2017,Gebrek_omschrijving=="Band(en) aanwezig met een profieldiepte van 1,6 t/m 2,5 mm")
     dAC1_make<-freqfunc(Car_AC1$Merk,1)
@@ -202,12 +232,15 @@ Car_497<-subset(Car_2017,Gebrek_omschrijving=="Kentekenplaatverlichting werkt ni
     d497_make<-freqfunc(Car_497$Merk,1)
     d497_model<-freqfunc(Car_497$Handelsbenaming,1)
     d497_trans<-"License plate light does not work (good) / is missing"
+
 #create a data frame and vectors and reorder appropriately
 Car_defects<-data.frame(freqfunc(Car_2017$Gebrek_omschrijving,5))
 Car_defects2<-Car_defects[order(-Car_defects$Freq),]
+
 defect_make<-rbind("Volkswagen","Peugeot","Opel","Volkswagen","Peugeot")
 defect_model<-rbind("Polo","Polo","206; 1.4 3DRS","Polo","Corsa")
 defect_trans<-rbind(dAC1_trans,dK04_trans,dRA2_trans,d205_trans,d497_trans)
+
 #bind individual frames to final frame and rename columns appropriately
 Car_most<-cbind(Car_defects2,defect_make,defect_model,defect_trans)
 colnames(Car_most)<-c("Defect","Frequency","Most_Frequent_Make","Most_Frequent_Model","Defect_Translation")
@@ -232,9 +265,10 @@ lint(filename = "./02_data_munging_summarizing_R_git/HW2_McGill_Max.Rmd")
 ```{r, eval=F}
 #install.packages("vioplot",repos = "http://cran.us.r-project.org")
 library(vioplot)
-setwd("C:/Users/mmcgi/OneDrive/Documents/homework/STAT_5014_homework/03_good_programming_R_functions")
-obsdata<-readRDS("./03_good_programming_R_functions/HW3_data.rds")
-func<-function(data){
+obsdata<-readRDS("./HW3_data.rds")
+
+#create a function to summarize and compile the necessary data
+sumfunc<-function(data){
             data1<-data[data$Observer=='1',]
         obs1<-c(1,apply(data1[2:3],2,mean),apply(data1[2:3],2,sd),cor(data1[2],data1[3]))
             data2<-data[data$Observer=='2',]
@@ -265,12 +299,15 @@ func<-function(data){
             data13<-data[data$Observer=='13',]
         obs13<-c(13,apply(data13[2:3],2,mean),apply(data13[2:3],2,sd),cor(data13[2],
                                                                        data13[3]))
-        
+#have the function compile a frame of the data
   obsdf<-rbind.data.frame(obs1,obs2,obs3,obs4,obs5,obs6,obs7,obs8,obs9,obs10,obs11,obs12,
                           obs13)
+#rename the columns of the data frame
   colnames(obsdf)=c("Observer","dev1 mean","dev2 mean","dev1 sd","dev2 sd","correlation")
   obsdf
 }
+
+#create a table, boxplot, and violin plot of the respective columns from the output
 knitr::kable(func(obsdata), caption="Observers Data Summary")
 par(mfcol=c(1,2))
 boxplot(func(obsdata)$"dev1 mean",func(obsdata)$"dev2 mean",names=c("dev1","dev2"),
@@ -295,13 +332,18 @@ knitr::kable(summary(doctorstidy), caption="Reading Data Summary")
 ```{r, eval=F}
 #install.packages(numDeriv)
 library(numDeriv)
+
+#define f(x)
 func02<-function(x){
   (3^x)-sin(x)+cos(5*x)
 }
+
+#investigate the plot of f(x)
 par(mfcol=c(1,1))
 curve(func02,xlim=c(-10,-5),lwd=2,lty=2,ylab='f(x)',main="Plot of f(x) from -10 to -5")
 abline(h=0)
 
+#function courtesy of <https://rpubs.com/aaronsc32/newton-raphson-method>
 newton<-function(f,a,b,tol=1e-5,n=1000){
   require(numDeriv)
   x0 <- a
@@ -326,6 +368,7 @@ newton<-function(f,a,b,tol=1e-5,n=1000){
   print('Too many iterations in method')
 }
 
+#
 newton(func02,-9.3,-9)
 newton(func02,-6.2,-5.9)
 par(mfcol=c(1,2))
@@ -336,7 +379,6 @@ plot(newton(func02,-6.2,-5.9)$iterations,xlab="Iteration",ylab="x",main="Iterati
 ```{r, eval=F}
 #install.packages("data.table")
 library(data.table)
-setwd("C:/Users/mmcgi/OneDrive/Documents/homework/STAT_5014_homework/03_good_programming_R_functions")
 #this had the defect code and description
 Car_Gebreken_select <- fread(input = "./Open_Data_RDW__Gebreken.csv", header = T,
                              select=c(1,6), showProgress=F)
