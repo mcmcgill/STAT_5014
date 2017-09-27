@@ -1,0 +1,239 @@
+---
+title: "HW2_McGill_Max"
+author: "Max McGill"
+date: 2017-09-11
+output:
+  pdf_document: default
+subtitle: Due Monday September 11, 10 am
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(tidyr)
+```
+
+\section{Problem 4}
+In the classroom, version control can assist in:
+\begin{itemize}
+\item updating and reverting code as necessary for assignments and projects
+\item maintaining and securing multiple versions of code for comparison, reversion, and conversion
+\item facilitating collaborative efforts for projects that require such methods
+\end{itemize}
+These functionalities benefit a classroom environment that makes heavy use of programming methods by providing the tools necessary to alter code, either alone or collaboratively, in such a way that facilitates an ease of maneuverability between versions of the code developed or used.
+In turn, this provides access to a host of options for the modification and sharing of code that simplify the classroom experience of tasks.
+
+\section{Problem 5}
+\subsection{Part A}
+```{r,echo=FALSE}
+urla<-"http://www2.isye.gatech.edu/~jeffwu/wuhamadabook/data/Sensory.dat"
+sensoryraw<-read.table(urla, header=F, skip=1, fill=T, stringsAsFactors = F)
+sensorytidy<-sensoryraw[-1,]
+#The data is recorded in triplicate, resulting in missing sets of item values when read.
+#This causes a shift of the values in rows with an integer and those without.
+#Create two dataframes by filtering rows with integers in V1.
+#Rename columns in the wone with integer values appropriatey.
+sensorytidy_a<-filter(.data = sensorytidy,V1 %in% 1:10) %>%
+                rename(Item=V1,V1=V2,V2=V3,V3=V4,V4=V5,V5=V6)
+#In the one without, create a column to represent missing item values.
+sensorytidy_b<-filter(.data = sensorytidy,!(V1 %in% 1:10)) %>%
+                mutate(Item=rep(as.character(1:10),each=2)) %>%
+                mutate(V1=as.numeric(V1)) %>%
+                select(c(Item,V1:V5))
+#bind the dataframes and name their columns as relevant. 
+sensorytidy<-bind_rows(sensorytidy_a,sensorytidy_b)
+colnames(sensorytidy)<-c("Item",paste("Person",1:5,sep="_"))
+#Gather and mutate the person variable to create a numerically valued column.
+#Arrange the data by item.
+sensorytidy<-sensorytidy %>%  
+    gather(Person,value,Person_1:Person_5) %>%  
+    mutate(Person = gsub("Person_","",Person)) %>%
+    arrange(Item)
+```
+```{r echo=F, eval=T, include=T}
+knitr::kable(summary(sensorytidy),caption="syntax may be slightly off")
+```
+
+\subsection{Part B}
+```{r,echo=FALSE}
+urlb<-"http://www2.isye.gatech.edu/~jeffwu/wuhamadabook/data/LongJumpData.dat"
+goldraw<-read.table(urlb,header=T,fill=T,stringsAsFactors=F)
+#The data are split among multiple columns that must be combined into coherence.
+#Create new dataframes for each variable by selecting their resective columns.
+#Then gather their columns into new data frames to create a singular column for each.
+yeardf<-select(goldraw,"Year","Jump","Long.1","Year.2")
+yearvalue<-gather(yeardf,Year:Year.2)
+longjumpdf<-select(goldraw,"Long","Year.1","Jump.1","Long.2")
+longjumpvalue<-gather(longjumpdf,Long:Long.2)
+#Combine these combined columns to create a new dataframe.
+goldna<-data.frame(yearvalue$value,longjumpvalue$value)
+#Remove the nonexistent values to create the tidy data frame.
+goldtidy<-drop_na(goldna)
+#Set the variable names to appropriate values.
+colnames(goldtidy)<-c("Year","Long Jump")
+#Mutate the year variable to display the years represented.
+goldtidy<-mutate(goldtidy, Year=Year+1900)
+summary(goldtidy)
+```
+\subsection{Part C}
+```{r,echo=FALSE}
+urlc<-"http://www2.isye.gatech.edu/~jeffwu/wuhamadabook/data/BrainandBodyWeight.dat"
+brainbodyraw<-read.table(urlc, header=F, skip=1, fill=T, stringsAsFactors = F)
+#This data contains two variables spread across multiple columns.
+#Rename the columns using repetiton to properly designate the variables.
+colnames(brainbodyraw)<-rep(c("Brain","Body"),3)
+#Create a new dataframe by binding the individual pairs of columns.
+brainbodytidy<-rbind(brainbodyraw[,1:2],brainbodyraw[,3:4],
+                         brainbodyraw[,5:6])
+#Remove nonexistent values.
+brainbodytidy<-brainbodytidy %>%  
+    filter(!(is.na(Brain))) 
+summary(brainbodytidy)
+```
+\subsection{Part D}
+```{r,echo=FALSE}
+urld<-"http://www2.isye.gatech.edu/~jeffwu/wuhamadabook/data/tomato.dat"
+tomatoraw<-read.table(urld, header=F, skip=2, fill=T, stringsAsFactors = F, comment.char =
+                        "")
+#The data is listed in triplicate by commas, contains an extraneous comma in one variable,
+#and contains a character hiding the first row of data.
+tomatotidy<-tomatoraw %>%  
+#Separate each collection of observations into appropriate columns. 
+    separate(V2,into=paste("C10000",1:3,sep="_"),sep=",",remove=T, extra="merge") %>%
+    separate(V3,into=paste("C20000",1:3,sep="_"),sep=",",remove=T, extra="merge") %>%
+    separate(V4,into=paste("C30000",1:3,sep="_"),sep=",",remove=T, extra="merge") %>%
+#Remove the extraneous comma.
+    mutate(C10000_3=gsub(",","",C10000_3)) %>%
+#Gather columns and rename the variables as appropriate.
+    gather(Clone,value,C10000_1:C30000_3) %>%
+    mutate(Variety=V1, Clone=gsub("C","",Clone)) %>%
+    mutate(Variety=gsub("\\\\#"," ",Variety)) %>%
+#Separate the clone column into variables clone and replicate.
+    separate(Clone,into = c("Clone","Replicate")) %>%
+#Exclude the V1 column and arrange by variety.
+    select(-V1,Variety,Clone,value) %>%
+    arrange(Variety)
+#All variables are still listed as characters.
+summary(tomatotidy)
+```
+\section{Problem 6}
+```{r,echo=FALSE, eval=FALSE}
+#Path to data
+.datapath <- file.path(path.package('swirl'), 'Courses',
+                      'R_Programming_E', 'Looking_at_Data',
+                      'plant-data.txt')
+# Read in data
+plants <- read.csv(.datapath, strip.white=TRUE, na.strings="")
+# Remove annoying columns
+.cols2rm <- c('Accepted.Symbol', 'Synonym.Symbol')
+plants <- plants[, !(names(plants) %in% .cols2rm)]
+
+# Make names pretty
+names(plants) <- c('Scientific_Name', 'Duration', 'Active_Growth_Period',
+                   'Foliage_Color', 'pH_Min', 'pH_Max',
+                   'Precip_Min', 'Precip_Max',
+                   'Shade_Tolerance', 'Temp_Min_F')
+plants<-mutate(plants,pH_Range=pH_Max-pH_Min)
+plants<-select(plants,c('Foliage_Color','pH_Range'))
+plants<-drop_na(plants)
+plants<-arrange(plants, Foliage_Color)
+#Can't figure out howw to convert it.
+plants.anova<-lm(pH_Range ~ Foliage_Color, data=plants)
+```
+\section{Problem 7}
+```{r,echo=FALSE}
+
+```
+\section{Appendix 1: R Code}
+\subsection{Problem 5}
+```{r,eval=FALSE}
+#Part A
+urla<-"http://www2.isye.gatech.edu/~jeffwu/wuhamadabook/data/Sensory.dat"
+sensoryraw<-read.table(urla, header=F, skip=1, fill=T, stringsAsFactors = F)
+sensorytidy<-sensoryraw[-1,]
+#The data is recorded in triplicate, resulting in missing sets of item values when read.
+#This causes a shift of the values in rows with an integer and those without.
+#Create two dataframes by filtering rows with integers in V1.
+#Rename columns in the wone with integer values appropriatey.
+sensorytidy_a<-filter(.data = sensorytidy,V1 %in% 1:10) %>%
+                rename(Item=V1,V1=V2,V2=V3,V3=V4,V4=V5,V5=V6)
+#In the one without, create a column to represent missing item values.
+sensorytidy_b<-filter(.data = sensorytidy,!(V1 %in% 1:10)) %>%
+                mutate(Item=rep(as.character(1:10),each=2)) %>%
+                mutate(V1=as.numeric(V1)) %>%
+                select(c(Item,V1:V5))
+#bind the dataframes and name their columns as relevant. 
+sensorytidy<-bind_rows(sensorytidy_a,sensorytidy_b)
+colnames(sensorytidy)<-c("Item",paste("Person",1:5,sep="_"))
+#Gather and mutate the person variable to create a numerically valued column.
+#Arrange the data by item.
+sensorytidy<-sensorytidy %>%  
+    gather(Person,value,Person_1:Person_5) %>%  
+    mutate(Person = gsub("Person_","",Person)) %>%
+    arrange(Item)
+summary(sensorytidy)
+```
+
+```{r,eval=F}
+#Part B
+urlb<-"http://www2.isye.gatech.edu/~jeffwu/wuhamadabook/data/LongJumpData.dat"
+goldraw<-read.table(urlb,header=T,fill=T,stringsAsFactors=F)
+#The data are split among multiple columns that must be combined into coherence.
+#Create new dataframes for each variable by selecting their resective columns.
+#Then gather their columns into new data frames to create a singular column for each.
+yeardf<-select(goldraw,"Year","Jump","Long.1","Year.2")
+yearvalue<-gather(yeardf,Year:Year.2)
+longjumpdf<-select(goldraw,"Long","Year.1","Jump.1","Long.2")
+longjumpvalue<-gather(longjumpdf,Long:Long.2)
+#Combine these combined columns to create a new dataframe.
+goldna<-data.frame(yearvalue$value,longjumpvalue$value)
+#Remove the nonexistent values to create the tidy data frame.
+goldtidy<-drop_na(goldna)
+#Set the variable names to appropriate values.
+colnames(goldtidy)<-c("Year","Long Jump")
+summary(goldtidy)
+```
+
+```{r,eval=FALSE}
+#Part C
+urlc<-"http://www2.isye.gatech.edu/~jeffwu/wuhamadabook/data/BrainandBodyWeight.dat"
+brainbodyraw<-read.table(urlc, header=F, skip=1, fill=T, stringsAsFactors = F)
+#This data contains two variables spread across multiple columns.
+#Rename the columns using repetiton to properly designate the variables.
+colnames(brainbodyraw)<-rep(c("Brain","Body"),3)
+#Create a new dataframe by binding the individual pairs of columns.
+brainbodytidy<-rbind(brainbodyraw[,1:2],brainbodyraw[,3:4],
+                         brainbodyraw[,5:6])
+#Remove nonexistent values.
+brainbodytidy<-brainbodytidy %>%  
+    filter(!(is.na(Brain))) 
+summary(brainbodytidy)
+```
+
+```{r,eval=FALSE}
+urld<-"http://www2.isye.gatech.edu/~jeffwu/wuhamadabook/data/tomato.dat"
+tomatoraw<-read.table(urld, header=F, skip=2, fill=T, stringsAsFactors = F, comment.char =
+                        "")
+#The data is listed in triplicate by commas, contains an extraneous comma in one variable,
+#and contains a character hiding the first row of data.
+tomatotidy<-tomatoraw %>%  
+#Separate each collection of observations into appropriate columns. 
+    separate(V2,into=paste("C10000",1:3,sep="_"),sep=",",remove=T, extra="merge") %>%
+    separate(V3,into=paste("C20000",1:3,sep="_"),sep=",",remove=T, extra="merge") %>%
+    separate(V4,into=paste("C30000",1:3,sep="_"),sep=",",remove=T, extra="merge") %>%
+#Remove the extraneous comma.
+    mutate(C10000_3=gsub(",","",C10000_3)) %>%
+#Gather columns and rename the variables as appropriate.
+    gather(Clone,value,C10000_1:C30000_3) %>%
+    mutate(Variety=V1, Clone=gsub("C","",Clone)) %>%
+    mutate(Variety=gsub("\\\\#"," ",Variety)) %>%
+#Separate the clone column into variables clone and replicate.
+    separate(Clone,into = c("Clone","Replicate")) %>%
+#Exclude the V1 column and arrange by variety.
+    select(-V1,Variety,Clone,value) %>%
+    arrange(Variety)
+#All variables are still listed as characters.
+summary(tomatotidy)
+```
+\subsection{Problem 6}
+\subsection{Problem 7}
