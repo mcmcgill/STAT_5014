@@ -9,3 +9,7 @@ Personenauto*
 *_files*
 *.txt
 *.csv
+<<<<<<< HEAD
+=======
+*.sql
+>>>>>>> 0c208da54454214135800ec69071c3ad15b0d5dc

@@ -1,0 +1,173 @@
+---
+title: "STAT 5014 HW6"
+author: "Max McGill"
+date: '`r Sys.Date()`'
+output: html_notebook
+---
+
+\section{Problem 2}
+\subsection{Part A}
+```{r, echo=FALSE, include=TRUE}
+#data generation
+    set.seed(12345)
+    y <- seq(from=1, to=100, length.out = 1e8) + rnorm(1e8)
+#a
+    m<-mean(y)
+#for loop
+    x<-c()
+for(i in 1:length(y)){
+  x[i]<-(y[i]-m)^2
+}
+sum(x)
+#timed for loop
+system.time({
+x<-c()
+m<-mean(y)
+for(i in 1:length(y)){
+  x[i]<-(y[i]-m)^2
+}
+sum(x)
+})
+```
+  
+\subsection{Part B}
+```{r, echo=FALSE, eval=TRUE, include=TRUE}
+#b
+#vector operations
+sum((y-m)^2)
+#timed vector operations
+system.time({
+sum((y-m)^2)
+})
+```
+  
+\section{Problem 3}
+```{r, echo=FALSE, eval=TRUE, include=TRUE}
+#object designation
+    set.seed(1256)
+    theta <- as.matrix(c(1,2),nrow=2)
+    X <- cbind(1,rep(1:10,10))
+    h <- X%*%theta+rnorm(100,0,0.2)
+#more objects
+    thetanew<-as.matrix(c(0,0),nrow=2)
+    alpha<-0.05
+    m<-length(h)
+    tol<-0.1
+
+#the computation
+for(i in 1:m){
+  while(abs(thetanew[1]-theta[1])>tol && abs(thetanew[2]-theta[2])>tol){
+    thetanew[1]<-theta[1]-alpha/m*sum(thetanew[1]+thetanew[2]*X[i,2]-h[i])
+    thetanew[2]<-theta[2]-alpha/m*sum((theta[1]+theta[2]*X[i,2]-h[i])*X[i,2])  
+    }
+}
+thetanew
+
+#for comparison
+lm(h~0+X)
+```
+Alpha here is equal to 0.05, and the tolerance used is 0.1.
+  
+\section{Problem 4}
+Inverting a matrix in order to solve for $\hat\beta$ would take up much more space and time than using an uninverted matrix. In this case, a potential option would be to rewrite the equation as $(X'X)\hat\beta = X'\underline{y}$ and use the software to solve for it.
+  
+\section{Problem 5}
+```{r, echo=FALSE, eval=TRUE, include=TRUE}
+#set values
+  set.seed(12456) 
+    
+    G <- matrix(sample(c(0,0.5,1),size=16000,replace=T),ncol=10)
+    R <- cor(G) # R: 10 * 10 correlation matrix of G
+    C <- kronecker(R, diag(1600)) # C is a 16000 * 16000 block diagonal matrix
+    id <- sample(1:16000,size=932,replace=F)
+    q <- sample(c(0,0.5,1),size=15068,replace=T) # vector of length 15068
+    A <- C[id, -id] # matrix of dimension 932 * 15068
+    B <- C[-id, -id] # matrix of dimension 15068 * 15068
+    p <- runif(932,0,1)
+    r <- runif(15068,0,1)
+    C<-NULL #save some memory space
+```
+\subsection{Part A}
+```{r, echo=FALSE, eval=TRUE, include=TRUE}
+#a
+#size of A
+object.size(A)
+#size of B
+object.size(B)
+#time to calculate y
+system.time({
+p+(A%*%solve(B)%*%(q-r))
+})
+```
+  
+\subsection{Part B}
+Firstly, it would make sense to invert B, classify that as a new matrix, and save it to call in the equation, before doing anything else. Another would be to do the same thing with q-r, naming the result elsewhere and calling it in the original subtraction's place. Multiplying the inverse of B by q-r before multiplying it by A will improve speed, as well.
+
+\subsection{Part C}
+```{r, echo=FALSE, eval=TRUE, include=TRUE}
+system.time({
+  G<-NULL
+    Bi<-solve(B)
+    st<-q-r
+    A%*%(Bi%*%st)+p
+})
+```
+  
+\section{Appendix 1: R Code}
+\subsection{Problem 2}
+```{r, echo=TRUE, eval=FALSE, include=TRUE}
+#data generation
+    set.seed(12345)
+    y <- seq(from=1, to=100, length.out = 1e8) + rnorm(1e8)
+#a
+    m<-mean(y)
+#for loop
+    x<-c()
+for(i in 1:length(y)){
+  x[i]<-(y[i]-m)^2
+}
+sum(x)
+#timed for loop
+system.time({
+x<-c()
+m<-mean(y)
+for(i in 1:length(y)){
+  x[i]<-(y[i]-m)^2
+}
+sum(x)
+})
+
+#b
+#vector operations
+sum((y-m)^2)
+#timed vector operations
+system.time({
+sum((y-m)^2)
+})
+```
+\subsection{Problem 3}
+```{r, echo=TRUE, eval=FALSE, include=TRUE}
+#object designation
+    set.seed(1256)
+    theta <- as.matrix(c(1,2),nrow=2)
+    X <- cbind(1,rep(1:10,10))
+    h <- X%*%theta+rnorm(100,0,0.2)
+#more objects
+    thetanew<-as.matrix(c(0,0),nrow=2)
+    alpha<-0.05
+    m<-length(h)
+    tol<-0.1
+
+#the computation
+for(i in 1:m){
+  while(abs(thetanew[1]-theta[1])>tol && abs(thetanew[2]-theta[2])>tol){
+    thetanew[1]<-theta[1]-alpha/m*sum(thetanew[1]+thetanew[2]*X[i,2]-h[i])
+    thetanew[2]<-theta[2]-alpha/m*sum((theta[1]+theta[2]*X[i,2]-h[i])*X[i,2])  
+    }
+}
+thetanew
+
+#for comparison
+lm(h~0+X)
+```
+\subsection{Problem 5}
